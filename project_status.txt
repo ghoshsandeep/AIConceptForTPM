@@ -1,0 +1,15 @@
+Vehicle Insurance Project
+
+The project is 75% complete.
+
+Development is almost complete.
+
+Payment gateway integration is delayed by 4 days.
+
+Testing has started.
+
+Two critical defects are currently open.
+
+Production deployment is planned for 20 August.
+
+The payment gateway delay may affect the production deployment schedule.
