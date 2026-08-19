@@ -6,7 +6,20 @@ from config import Config
 from langchain_core.prompts import ChatPromptTemplate #Create the Prompt
 from langchain_openai import ChatOpenAI
 from langchain_core.runnables import RunnablePassthrough #day 13
+from pydantic import BaseModel, Field #day 15
 
+class ProjectRiskResponse(BaseModel):
+    answer: str = Field(
+        description="Answer to the user's question based only on the provided context."
+    )
+
+    risk_level: str = Field(
+        description="Risk level based on the provided project information."
+    )
+
+    impact: str = Field(
+        description="Potential impact on the project."
+    )
 
 #Load the document
 loader = TextLoader("project_status.txt")
@@ -40,14 +53,23 @@ llm = ChatOpenAI(
     model="gpt-5.6-luna"
 )
 
+structured_llm = llm.with_structured_output(
+    ProjectRiskResponse
+)
+
+
 prompt = ChatPromptTemplate.from_template("""
 Answer the question using only the provided context.
+
+Do not use information that is not present in the context.
 
 Context:
 {context}
 
 Question:
 {question}
+
+Return the answer using the required structured format.
 """)
 
 def format_docs(docs):
@@ -62,14 +84,17 @@ rag_chain = (
         "question": RunnablePassthrough()
     }
     | prompt
-    | llm
+    | structured_llm
 )
 
-query_1 = "How long is the payment gateway integration delayed?"
+query = "How long is the payment gateway integration delayed?"
 query_2="What impact could the payment gateway delay have?"
-query="When is the production deployment planned?"
+query_3="When is the production deployment planned?"
 
 response = rag_chain.invoke(query)
 
-print("Response:", response.content)
+#print("Response:", response.content)
+print("Answer:", response.answer)
+print("Risk Level:", response.risk_level)
+print("Impact:", response.impact)
 

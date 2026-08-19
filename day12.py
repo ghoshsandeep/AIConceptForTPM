@@ -54,6 +54,7 @@ Question:
 #query = "How long is the payment gateway integration delayed?"
 query="What impact could the payment gateway delay have?"
 
+
 results = retriever.invoke(query)
 
 context = "\n\n".join(
