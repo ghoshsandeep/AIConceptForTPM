@@ -103,74 +103,58 @@ messages = [
     )
 ]
 
+# Loop through the conversation until the LLM indicates that it has completed its response
+while True:
+    # --------------------------------------------------
+    # 6. LLM Call
+    # --------------------------------------------------
 
-# --------------------------------------------------
-# 6. First LLM Call
-# --------------------------------------------------
+    response = llm_with_tools.invoke(messages)
 
-response = llm_with_tools.invoke(messages)
+    #print("\n--- LLM RESPONSE ---")
+    #print(response.content)
 
+    # --------------------------------------------------
+    # 7. Add AI response to conversation
+    # --------------------------------------------------
 
-print("\n \n--- FIRST LLM RESPONSE ---")
-#print(response)
-print(response.tool_calls)
-print("\n \n ---")
+    messages.append(response)
 
+    # Check if the LLM has indicated that it has completed its response
+    if not response.tool_calls:
+        break
 
-# --------------------------------------------------
-# 7. Add AI response to conversation
-# --------------------------------------------------
+    # --------------------------------------------------
+    # 8. Execute requested tools
+    # --------------------------------------------------
 
-messages.append(response)
+    for tool_call in response.tool_calls:
 
+        tool_name = tool_call["name"]
+        tool_args = tool_call["args"]
+        tool_call_id = tool_call["id"]
 
-# --------------------------------------------------
-# 8. Execute requested tools
-# --------------------------------------------------
+        #print("\nTool requested:", tool_name)
+        #print("Tool arguments:", tool_args)
 
-for tool_call in response.tool_calls:
+        # Find actual tool
+        tool = tool_map[tool_name]
 
-    tool_name = tool_call["name"]
-    tool_args = tool_call["args"]
-    tool_call_id = tool_call["id"]
+        # Execute tool
+        tool_result = tool.invoke(tool_args)
 
-    #print("\nTool requested:", tool_name)
-    print("Tool arguments:", tool_args)
+        #print("Tool result:", tool_result)
 
-    # Find actual tool
-    tool = tool_map[tool_name]
+        # Create ToolMessage
+        tool_message = ToolMessage(
+            content=str(tool_result),
+            tool_call_id=tool_call_id
+        )
 
-    # Execute tool
-    tool_result = tool.invoke(tool_args)
-
-    #print("Tool result:", tool_result)
-
-    # Create ToolMessage
-    tool_message = ToolMessage(
-        content=str(tool_result),
-        tool_call_id=tool_call_id
-    )
-
-    # Add result to conversation
-    messages.append(tool_message)
-
-
-# --------------------------------------------------
-# 9. Second LLM Call
-# --------------------------------------------------
-
-final_response = llm_with_tools.invoke(messages)
-
-
-print("\n \n--- FINAL RESPONSE ---")
-print(final_response.content)
-#print("\n \n--- RESPONSE OBJECT ---")
-#print(response)
+        # Add result to conversation
+        messages.append(tool_message)
 
 
 
-# 1.What is the status of claim CLM1001?
-# 2. What is the status of policy POL1003?
-# 3. What is the premium for a vehicle worth 800000?
-# 4. Check policy POL1001 and tell me whether it is active.
-# Also calculate the premium for a vehicle worth 800000.
+print("\n\n--- FINAL RESPONSE ---")
+print(response.content)
